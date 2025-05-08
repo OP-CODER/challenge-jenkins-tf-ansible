@@ -1,19 +1,19 @@
 pipeline {
     agent any
-    
+
     environment {
         AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', 
-                     url: 'https://github.com/OP-CODER/challenge-jenkins-tf-ansible.git'
+                git branch: 'main',
+                    url: 'https://github.com/OP-CODER/challenge-jenkins-tf-ansible.git'
             }
         }
-        
+
         stage('Terraform Init & Plan') {
             steps {
                 dir('terraform') {
@@ -22,7 +22,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Terraform Apply') {
             steps {
                 dir('terraform') {
@@ -30,7 +30,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Generate Inventory') {
             steps {
                 dir('terraform') {
@@ -38,21 +38,31 @@ pipeline {
                 }
             }
         }
-        
-        stage('Run Ansible') {
+
+        stage('Configure VMs') {
             steps {
-                dir('ansible') {
-                    sh 'ansible-playbook -i inventory.ini main.yaml'
+                withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu1', keyFileVariable: 'UBUNTU_KEY')]) {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'ec2-user1', keyFileVariable: 'AMAZON_KEY')]) {
+                        dir('ansible') {
+                            sh '''
+                                chmod 600 $UBUNTU_KEY $AMAZON_KEY
+                                export ANSIBLE_HOST_KEY_CHECKING=False
+
+                                ansible-playbook -i inventory.ini playbook_backend.yml --private-key=$UBUNTU_KEY -u ubuntu
+                                ansible-playbook -i inventory.ini playbook_frontend.yml --private-key=$AMAZON_KEY -u ec2-user
+                            '''
+                        }
+                    }
                 }
             }
         }
     }
-    
+
     post {
         always {
             echo 'Cleaning up workspace...'
-            archiveArtifacts artifacts: 'ansible/inventory.ini', 
-                            onlyIfSuccessful: true
+            archiveArtifacts artifacts: 'ansible/inventory.ini',
+                                onlyIfSuccessful: true
             cleanWs()
         }
     }
