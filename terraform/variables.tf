@@ -14,5 +14,5 @@ variable "region" {
 variable "public_key" {
   description = "SSH public key for VM access"
   type        = string
-  default    = "merikunji"
+  default    = "jenkins-tf"
 }
