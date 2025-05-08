@@ -7,7 +7,7 @@ r9.local ansible_host=${aws_instance.r9.public_ip} ansible_user=ec2-user
 d12.local ansible_host=${aws_instance.d12.public_ip} ansible_user=admin
 
 [all:vars]
-ansible_private_key_file=/var/lib/jenkins/.ssh/.merikunji.pem
+ansible_private_key_file=/var/lib/jenkins/jenkins-tf.pem
 ansible_connection=ssh
 ansible_python_interpreter=/usr/bin/python3
 
