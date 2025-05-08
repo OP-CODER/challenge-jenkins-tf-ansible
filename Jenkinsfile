@@ -10,7 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main', 
-                     url: 'https://github.com/dakkani/challenge-jenkins-tf-ansible.git'
+                     url: 'https://github.com/OP-CODER/challenge-jenkins-tf-ansible.git'
             }
         }
         
